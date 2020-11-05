@@ -115,7 +115,7 @@ def get_playIds_by_player(c, gameId, nflId):
         query = '''SELECT DISTINCT playId FROM tracking WHERE gameId = ( %s ) AND nflId = ( %s )''' % (gameId, nflId)
         c.execute(query)
         playIds = c.fetchall() 
-        print("query executed successfully: ( %s ) records found" % (len(playIds)))
+        #print("query executed successfully: ( %s ) records found" % (len(playIds)))
     except Error as e:
         print(e)
     return playIds
@@ -126,7 +126,7 @@ def get_frameIds_by_play(c, gameId, nflId, playId):
         query = '''SELECT DISTINCT frameId FROM tracking WHERE gameId = ( %s ) AND nflId = ( %s ) AND playId = ( %s )''' % (gameId, nflId, playId)
         c.execute(query)
         frameIds = c.fetchall() 
-        print("query executed successfully: ( %s ) records found" % (len(frameIds)))
+        #print("query executed successfully: ( %s ) records found" % (len(frameIds)))
     except Error as e:
         print(e)
     return frameIds
@@ -137,7 +137,7 @@ def get_locations_by_frame(c, gameId, playId, frameId):
         query = '''SELECT x, y, nflId FROM tracking WHERE gameId = ( %s ) AND  playId = ( %s ) AND frameId = ( %s ) AND position IN ("WR", "TE", "RB")''' % (gameId, playId, frameId)
         c.execute(query)
         locations = c.fetchall() 
-        print("query executed successfully: ( %s ) records found" % (len(locations)))
+        #print("query executed successfully: ( %s ) records found" % (len(locations)))
     except Error as e:
         print(e)
     return locations
@@ -148,7 +148,7 @@ def get_target_defender_location(c, gameId, playId, frameId, targetDefId):
         query = '''SELECT x, y, nflId FROM tracking WHERE gameId = ( %s ) AND  playId = ( %s ) AND frameId = ( %s ) AND nflId = ( %s )''' % (gameId, playId, frameId, targetDefId)
         c.execute(query)
         location = c.fetchall() 
-        print("query executed successfully: ( %s ) records found" % (len(location)))
+        #print("query executed successfully: ( %s ) records found" % (len(location)))
     except Error as e:
         print(e)
     return location

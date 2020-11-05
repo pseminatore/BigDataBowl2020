@@ -4,6 +4,7 @@ import sqlite3
 from sqlite3 import Error
 import os
 import math
+import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
@@ -23,9 +24,9 @@ def main():
     connection.commit() """
     
     gameIds = dataStore.get_all_gameIds(cursor)
-    data_frame = {}
+    data_frame = []
     
-    for gameId_tuple in gameIds:
+    for gameId_tuple in gameIds[:1]:
         
         gameId = int(gameId_tuple[0])
         nflIds = dataStore.get_nflIds_from_game(cursor, gameId)
@@ -47,6 +48,7 @@ def main():
                 frameIds = dataStore.get_frameIds_by_play(cursor, gameId, nflId, playId)
                 player_play_distances = []
                 
+                ## TODO - remove frames after pass completed / incomplete
                 for frameId_tuple in frameIds[15:]:
                 
                     frameId = int(frameId_tuple[0])
@@ -54,7 +56,7 @@ def main():
                     def_location = dataStore.get_target_defender_location(cursor, gameId, playId, frameId, nflId)
                     closest_off_player = calculate_min_distance(locations, def_location)
                     player_play_distances.append(closest_off_player)
-                    print(closest_off_player)
+                    #print(closest_off_player)
                 
                 average_distance = calculate_avg_distance(player_play_distances)
                 player_avg_distances.append(average_distance)
@@ -62,13 +64,24 @@ def main():
             average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
             player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
             player_distances.append(player_avg_record)
-        data_frame[gameId] = player_distances
-                    
-                    
+        data_frame.append([gameId, player_distances])
+    
+    ## TODO - some sort of visualization
+    plt.scatter(extract_nflIds_from_dataframe(data_frame), extract_avg_distances_from_dataframe(data_frame))
+    plt.show()                
         
         
+def extract_nflIds_from_dataframe(data_frame):
+    xs = []
+    for player in data_frame[0][1]:
+        xs.append(player[0])
+    return xs
 
-        
+def extract_avg_distances_from_dataframe(data_frame):
+    ys = []
+    for player in data_frame[0][1]:
+        ys.append(player[1])
+    return ys
     
 def calculate_min_distance(off_locations, def_location):
     distances = []
