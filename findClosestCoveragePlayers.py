@@ -23,6 +23,7 @@ def main():
     connection.commit() """
     
     gameIds = dataStore.get_all_gameIds(cursor)
+    data_frame = {}
     
     for gameId_tuple in gameIds:
         
@@ -30,12 +31,16 @@ def main():
         nflIds = dataStore.get_nflIds_from_game(cursor, gameId)
         player_distances = []
         
+        ## Get nflIds for all coverage players
         for nflId_tuple in nflIds:
             
             nflId = int(nflId_tuple[0])
             playIds = dataStore.get_playIds_by_player(cursor, gameId, nflId)
             player_avg_distances = []
             
+            ## TODO - filter out running plays
+            ## TODO - attempt to filter out zone coverage
+            ## Get players average distance from coverage target on each play
             for playId_tuple in playIds:
                 
                 playId = int(playId_tuple[0])
@@ -57,7 +62,7 @@ def main():
             average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
             player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
             player_distances.append(player_avg_record)
-                    
+        data_frame[gameId] = player_distances
                     
                     
         
