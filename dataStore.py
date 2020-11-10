@@ -67,9 +67,11 @@ def create_games_table(c):
         
 def create_avg_separation_table(c):
     query = '''CREATE TABLE IF NOT EXISTS avg_separation (
-        nflId real PRIMARY KEY,
+        nflId real,
         gameId real,
         avgSeparation real,
+        numPlays real,
+        PRIMARY KEY (nflId, gameId)
     );'''
     
     try:
@@ -99,6 +101,14 @@ def populate_tracking_table(c, data):
             reader_count += 1
             print("Inserted row ( %d ) successfully" % reader_count)
         print("Inserted data succesfully: Inserted ( %d ) records" % counter)
+    except Error as e:
+        print(e)
+        
+def record_avg_separation_table(c, gameId, data):
+    try:
+        
+        query = '''INSERT INTO avg_separation ( nflId, gameId, avgSeparation, numPlays ) VALUES ( %d, %d, %f, %d )''' % (data[0], gameId, data[1], data[2])
+        c.execute(query) 
     except Error as e:
         print(e)
 
@@ -207,5 +217,13 @@ def drop_tracking_table(c):
     try:
         c.execute(query)
         print("Drop table -tracking- successful")
+    except Error as e:
+        print(e)
+        
+def drop_separation_table(c):
+    query = '''DROP TABLE avg_separation;'''
+    try:
+        c.execute(query)
+        print("Drop table -avg_separation- successful")
     except Error as e:
         print(e)

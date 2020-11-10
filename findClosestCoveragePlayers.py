@@ -16,15 +16,16 @@ def main():
     cursor = connection.cursor()
     """ dataStore.drop_games_table(cursor)
     dataStore.drop_tracking_table(cursor)
-    connection.commit() """
-    
-
+    dataStore.drop_separation_table(cursor)
+    connection.commit()
+    """
+    dataStore.create_avg_separation_table(cursor)
     ## Set up data tables - only needed to run once
-    """ dataStore.create_games_table(cursor)
+    dataStore.create_games_table(cursor)
     dataStore.create_tracking_table(cursor)
     
     dataStore.populate_games_table(cursor, game)
-    dataStore.populate_tracking_table(cursor, tracking) """
+    dataStore.populate_tracking_table(cursor, tracking) 
     connection.commit() 
     
     gameIds = dataStore.get_all_gameIds(cursor)
@@ -70,7 +71,10 @@ def main():
             average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
             player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
             player_distances.append(player_avg_record)
+            dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
         data_frame.append([gameId, player_distances])
+    connection.commit()
+    
     
     ## TODO - some sort of visualization    
     closest_coverage_players = get_top_ten_players(data_frame)
