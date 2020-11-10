@@ -152,7 +152,19 @@ def get_target_defender_location(c, gameId, playId, frameId, targetDefId):
     except Error as e:
         print(e)
     return location
-    
+
+def get_name_by_nflId(c, nflId):
+    name = None
+    try:
+        query = '''SELECT displayName FROM tracking WHERE nflId = ( %s )''' % (nflId)
+        c.execute(query)
+        name = c.fetchall()[0][0] 
+        #print("query executed successfully: ( %s ) records found" % (len(location)))
+    except Error as e:
+        print(e)
+    return name
+
+
 def drop_table(c):
     query = '''DROP TABLE games;'''
     try:
