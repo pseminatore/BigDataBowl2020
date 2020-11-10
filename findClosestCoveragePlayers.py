@@ -45,7 +45,8 @@ def main():
             for playId_tuple in playIds:
                 
                 playId = int(playId_tuple[0])
-                frameIds = dataStore.get_frameIds_by_play(cursor, gameId, nflId, playId)
+                stop_frame_id = dataStore.get_frameId_where_pass_arrives(cursor, gameId, playId)
+                frameIds = dataStore.get_frameIds_by_play(cursor, gameId, nflId, playId, stop_frame_id)
                 player_play_distances = []
                 
                 ## TODO - remove frames after pass completed / incomplete
@@ -71,13 +72,15 @@ def main():
     closest_coverage_distance = extract_best_averages(closest_coverage_players)
     
     plt.bar(range(len(closest_coverage_players)), closest_coverage_distance, width=0.6)
-    x_pos = [i for i in range(len(closest_coverage_players))]
-    plt.xticks(x_pos, extract_names_from_nflIds(cursor, extract_nflIds_from_best(closest_coverage_players)))
     plt.ylabel("Average Separation From Closest Receiver (yards)")
     plt.title("Which Players Minimized Separation By Receivers In 2019?")
+    x_pos = [i for i in range(len(closest_coverage_players))]
+    plt.rcParams.update({'font.size': 10})
+    plt.xticks(x_pos, extract_names_from_nflIds(cursor, extract_nflIds_from_best(closest_coverage_players)))
     
     plt.rcParams.update({'font.size': 6})
-    plt.figtext(0, 1, "Min 30 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
+    plt.figtext(0.1, 0.05, "Min 30 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
+
     for x,y in zip(x_pos, closest_coverage_distance):
         
         label = "{:.2f}".format(y)

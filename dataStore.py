@@ -120,10 +120,10 @@ def get_playIds_by_player(c, gameId, nflId):
         print(e)
     return playIds
 
-def get_frameIds_by_play(c, gameId, nflId, playId):
+def get_frameIds_by_play(c, gameId, nflId, playId, stop_frame_id):
     frameIds = None
     try:
-        query = '''SELECT DISTINCT frameId FROM tracking WHERE gameId = ( %s ) AND nflId = ( %s ) AND playId = ( %s )''' % (gameId, nflId, playId)
+        query = '''SELECT DISTINCT frameId FROM tracking WHERE gameId = ( %s ) AND nflId = ( %s ) AND playId = ( %s ) AND frameId <= ( %d )''' % (gameId, nflId, playId, stop_frame_id)
         c.execute(query)
         frameIds = c.fetchall() 
         #print("query executed successfully: ( %s ) records found" % (len(frameIds)))
@@ -164,6 +164,16 @@ def get_name_by_nflId(c, nflId):
         print(e)
     return name
 
+def get_frameId_where_pass_arrives(c, gameId, playId):
+    frameId = None
+    try:
+        query = '''SELECT DISTINCT frameId FROM tracking WHERE gameId = ( %s ) AND playId = ( %s ) AND event IN ("pass_outcome_caught", "pass_outcome_incomplete", "pass_outcome_interception", "pass_outcome_touchdown", "qb_sack", "qb_strip_sack", "qb_spike", "tackle") ''' % (gameId, playId)
+        c.execute(query)
+        frameId = c.fetchall()[0] 
+        #print("query executed successfully: ( %s ) records found" % (len(frameIds)))
+    except Error as e:
+        print(e)
+    return int(frameId[0])
 
 def drop_table(c):
     query = '''DROP TABLE games;'''
