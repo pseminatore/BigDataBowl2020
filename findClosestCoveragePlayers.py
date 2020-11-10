@@ -10,18 +10,22 @@ from operator import itemgetter
 
 def main():
     game = dataReader.readGameData()[0]
-    tracking = dataReader.readWeek1TrackingData()
+    tracking = dataReader.readTrackingData()
     
     connection = dataStore.create_data_store()
     cursor = connection.cursor()
+    """ dataStore.drop_games_table(cursor)
+    dataStore.drop_tracking_table(cursor)
+    connection.commit() """
     
+
     ## Set up data tables - only needed to run once
     """ dataStore.create_games_table(cursor)
     dataStore.create_tracking_table(cursor)
     
     dataStore.populate_games_table(cursor, game)
-    dataStore.populate_tracking_table(cursor, tracking)
-    connection.commit() """
+    dataStore.populate_tracking_table(cursor, tracking) """
+    connection.commit() 
     
     gameIds = dataStore.get_all_gameIds(cursor)
     data_frame = []
@@ -49,7 +53,6 @@ def main():
                 frameIds = dataStore.get_frameIds_by_play(cursor, gameId, nflId, playId, stop_frame_id)
                 player_play_distances = []
                 
-                ## TODO - remove frames after pass completed / incomplete
                 for frameId_tuple in frameIds[15:]:
                 
                     frameId = int(frameId_tuple[0])
@@ -58,9 +61,11 @@ def main():
                     closest_off_player = calculate_min_distance(locations, def_location)
                     player_play_distances.append(closest_off_player)
                     #print(closest_off_player)
-                
-                average_distance = calculate_avg_distance(player_play_distances)
-                player_avg_distances.append(average_distance)
+                if player_play_distances:
+                    average_distance = calculate_avg_distance(player_play_distances)
+                    player_avg_distances.append(average_distance)
+                else:
+                    pass
                 
             average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
             player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
@@ -74,12 +79,11 @@ def main():
     plt.bar(range(len(closest_coverage_players)), closest_coverage_distance, width=0.6)
     plt.ylabel("Average Separation From Closest Receiver (yards)")
     plt.title("Which Players Minimized Separation By Receivers In 2019?")
-    x_pos = [i for i in range(len(closest_coverage_players))]
-    plt.rcParams.update({'font.size': 10})
-    plt.xticks(x_pos, extract_names_from_nflIds(cursor, extract_nflIds_from_best(closest_coverage_players)))
-    
     plt.rcParams.update({'font.size': 6})
-    plt.figtext(0.1, 0.05, "Min 30 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
+    x_pos = [i for i in range(len(closest_coverage_players))]
+    plt.xticks(x_pos, extract_names_from_nflIds(cursor, extract_nflIds_from_best(closest_coverage_players)), rotation=15)
+    
+    plt.figtext(0.1, 0.02, "Min 30 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
 
     for x,y in zip(x_pos, closest_coverage_distance):
         
@@ -90,7 +94,7 @@ def main():
                  textcoords="offset points", # how to position the text
                  xytext=(0,10), # distance from text to points (x,y)
                  ha='center') # horizontal alignment can be left, right or center
-    plt.show()                
+    plt.show()
 
 
 def set_minimum_number_plays(player):

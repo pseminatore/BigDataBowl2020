@@ -64,6 +64,19 @@ def create_games_table(c):
         print("Connection to table -games- successful")
     except Error as e:
         print(e)
+        
+def create_avg_separation_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS avg_separation (
+        nflId real PRIMARY KEY,
+        gameId real,
+        avgSeparation real,
+    );'''
+    
+    try:
+        c.execute(query)
+        print("Connection to table -avg_separation- successful")
+    except Error as e:
+        print(e)
 
 def populate_games_table(c, data):
     try:
@@ -75,11 +88,17 @@ def populate_games_table(c, data):
         print(e)
 
 def populate_tracking_table(c, data):
+    counter = 0
+    reader_count = 0
     try:
-        for row in data:
-            query = '''INSERT INTO tracking ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
-            c.execute(query) 
-        print("Inserted data succesfully")
+        for reader in data[:2]:
+            for row in reader:
+                query = '''INSERT INTO tracking ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
+                c.execute(query)
+                counter += 1
+            reader_count += 1
+            print("Inserted row ( %d ) successfully" % reader_count)
+        print("Inserted data succesfully: Inserted ( %d ) records" % counter)
     except Error as e:
         print(e)
 
@@ -175,10 +194,18 @@ def get_frameId_where_pass_arrives(c, gameId, playId):
         print(e)
     return int(frameId[0])
 
-def drop_table(c):
+def drop_games_table(c):
     query = '''DROP TABLE games;'''
     try:
         c.execute(query)
         print("Drop table -games- successful")
+    except Error as e:
+        print(e)
+        
+def drop_tracking_table(c):
+    query = '''DROP TABLE tracking;'''
+    try:
+        c.execute(query)
+        print("Drop table -tracking- successful")
     except Error as e:
         print(e)
