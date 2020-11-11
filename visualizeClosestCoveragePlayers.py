@@ -17,7 +17,7 @@ connection.commit()
 
 plt.bar(range(len(closest_coverage_players)), closest_coverage_distance, width=0.6)
 plt.ylabel("Average Separation From Closest Receiver (yards)")
-plt.title("Which Players Minimized Separation By Receivers In 2019?")
+plt.title("Which Players Minimized Separation From Receivers In 2019?")
 plt.rcParams.update({'font.size': 6})
 x_pos = [i for i in range(len(closest_coverage_players))]
 plt.xticks(x_pos, findClosestCoveragePlayers.extract_names_from_nflIds(cursor, findClosestCoveragePlayers.extract_nflIds_from_best(closest_coverage_players)), rotation=15)
