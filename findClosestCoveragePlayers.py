@@ -18,7 +18,7 @@ def main():
     dataStore.drop_tracking_table(cursor)
     dataStore.drop_separation_table(cursor)
     connection.commit()
-    """
+    
     dataStore.create_avg_separation_table(cursor)
     ## Set up data tables - only needed to run once
     dataStore.create_games_table(cursor)
@@ -26,7 +26,7 @@ def main():
     
     dataStore.populate_games_table(cursor, game)
     dataStore.populate_tracking_table(cursor, tracking) 
-    connection.commit() 
+    connection.commit()""" 
     
     gameIds = dataStore.get_all_gameIds(cursor)
     data_frame = []
@@ -71,13 +71,13 @@ def main():
             average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
             player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
             player_distances.append(player_avg_record)
-            dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
+            #dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
         data_frame.append([gameId, player_distances])
     connection.commit()
     
     
     ## TODO - some sort of visualization    
-    closest_coverage_players = get_top_ten_players(data_frame)
+    closest_coverage_players = get_top_ten_players(cursor)
     closest_coverage_distance = extract_best_averages(closest_coverage_players)
     
     plt.bar(range(len(closest_coverage_players)), closest_coverage_distance, width=0.6)
@@ -112,15 +112,26 @@ def extract_nflIds_from_best(best_players):
     nflIds = [player[0] for player in best_players]
     return nflIds
        
-def get_top_ten_players(data_frame):
-    games = []
-    for game in data_frame:
-        games.append(game[1])
-    players = [item for sublist in games for item in sublist]
-    ys = filter(set_minimum_number_plays, players)
-    players_list = list(ys)
-    players_list.sort(key=itemgetter(1))        
-    return players_list[:10]
+def get_top_ten_players(cursor):
+    players = dataStore.get_nflIds_from_separation_table(cursor)
+    players_list = []
+    for player in players:
+        nflId = int(player[0])
+        separations = 0
+        plays = 0
+        player_record = dataStore.get_separation_for_player_in_separation_table(cursor, nflId)
+        if len(player_record) > 0:
+            for record in player_record:
+                separations += record[0]
+                plays += record[1]
+            avg_separation = separations / len(player_record)
+            players_list.append([player, avg_separation, plays])
+        else:
+            pass
+    ys = filter(set_minimum_number_plays, players_list)
+    filtered_players_list = list(ys)
+    filtered_players_list.sort(key=itemgetter(1))        
+    return filtered_players_list[:10]
         
 def extract_nflIds_from_dataframe(data_frame):
     xs = []

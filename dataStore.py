@@ -204,6 +204,27 @@ def get_frameId_where_pass_arrives(c, gameId, playId):
         print(e)
     return int(frameId[0])
 
+def get_nflIds_from_separation_table(c):
+    nflIds = None
+    try:
+        query = '''SELECT DISTINCT nflId FROM avg_separation'''
+        c.execute(query)
+        nflIds = c.fetchall() 
+        #print("query executed successfully: ( %s ) records found" % (len(nflIds)))
+    except Error as e:
+        print(e)
+    return nflIds
+
+def get_separation_for_player_in_separation_table(c, nflId):
+    separations = None
+    try:
+        query = '''SELECT avgSeparation, numPlays FROM avg_separation WHERE nflId = ( %d )''' % (nflId)
+        c.execute(query)
+        separations = c.fetchall() 
+    except Error as e:
+        print(e)
+    return separations
+
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
     try:
