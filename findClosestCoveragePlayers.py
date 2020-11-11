@@ -44,19 +44,24 @@ def main():
                     frameId = int(frameId_tuple[0])
                     locations = dataStore.get_locations_by_frame(cursor, gameId, playId, frameId)
                     def_location = dataStore.get_target_defender_location(cursor, gameId, playId, frameId, nflId)
-                    closest_off_player = calculate_min_distance(locations, def_location)
-                    player_play_distances.append(closest_off_player)
+                    if locations and def_location:
+                        closest_off_player = calculate_min_distance(locations, def_location)
+                        player_play_distances.append(closest_off_player)
+                    else:
+                        pass
                     #print(closest_off_player)
                 if player_play_distances:
                     average_distance = calculate_avg_distance(player_play_distances)
                     player_avg_distances.append(average_distance)
                 else:
                     pass
-                
-            average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
-            player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
-            player_distances.append(player_avg_record)
-            dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
+            if player_avg_distances:    
+                average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
+                player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
+                player_distances.append(player_avg_record)
+                #dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
+            else:
+                pass
         data_frame.append([gameId, player_distances])
     connection.commit()
     
@@ -72,7 +77,7 @@ def main():
     x_pos = [i for i in range(len(closest_coverage_players))]
     plt.xticks(x_pos, extract_names_from_nflIds(cursor, extract_nflIds_from_best(closest_coverage_players)), rotation=15)
     
-    plt.figtext(0.1, 0.02, "Min 30 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
+    plt.figtext(0.1, 0.02, "Min 200 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
 
     for x,y in zip(x_pos, closest_coverage_distance):
         
@@ -87,7 +92,7 @@ def main():
 
 
 def set_minimum_number_plays(player):
-    return player[2] > 30
+    return player[2] > 200
 
 def extract_best_averages(best_players):
     avs = [player[1] for player in best_players]

@@ -93,9 +93,9 @@ def populate_tracking_table(c, data):
     counter = 0
     reader_count = 0
     try:
-        for reader in data[:4]:
+        for reader in data:
             for row in reader:
-                query = '''INSERT INTO tracking ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
+                query = '''INSERT OR IGNORE INTO tracking ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
                 c.execute(query)
                 counter += 1
             reader_count += 1
@@ -133,7 +133,7 @@ def get_nflIds_from_game(c, gameId):
         query = '''SELECT DISTINCT nflId FROM tracking WHERE gameId = ( %s ) AND position IN ("SS", "FS", "MLB", "LB", "CB")''' % (gameId)
         c.execute(query)
         nflIds = c.fetchall() 
-        print("query executed successfully: ( %s ) records found" % (len(nflIds)))
+        #print("query executed successfully: ( %s ) records found" % (len(nflIds)))
     except Error as e:
         print(e)
     return nflIds
@@ -198,7 +198,11 @@ def get_frameId_where_pass_arrives(c, gameId, playId):
     try:
         query = '''SELECT DISTINCT frameId FROM tracking WHERE gameId = ( %s ) AND playId = ( %s ) AND event IN ("pass_outcome_caught", "pass_outcome_incomplete", "pass_outcome_interception", "pass_outcome_touchdown", "qb_sack", "qb_strip_sack", "qb_spike", "tackle") ''' % (gameId, playId)
         c.execute(query)
-        frameId = c.fetchall()[0] 
+        arr = c.fetchall()
+        if arr:
+            frameId = arr[0]
+        else:
+            return 1
         #print("query executed successfully: ( %s ) records found" % (len(frameIds)))
     except Error as e:
         print(e)
