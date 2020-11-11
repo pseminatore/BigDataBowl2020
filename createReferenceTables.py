@@ -12,6 +12,7 @@ cursor = connection.cursor()
 dataStore.create_avg_separation_table(cursor)
 dataStore.create_games_table(cursor)
 dataStore.create_tracking_table(cursor)
+dataStore.create_avg_separation_by_player_table(cursor)
 
 dataStore.populate_games_table(cursor, game)
 dataStore.populate_tracking_table(cursor, tracking) 

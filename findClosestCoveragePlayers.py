@@ -14,7 +14,6 @@ def main():
     
 
     gameIds = dataStore.get_all_gameIds(cursor)
-    data_frame = []
     
     for gameId_tuple in gameIds:
         
@@ -29,7 +28,6 @@ def main():
             playIds = dataStore.get_playIds_by_player(cursor, gameId, nflId)
             player_avg_distances = []
             
-            ## TODO - filter out running plays
             ## TODO - attempt to filter out zone coverage
             ## Get players average distance from coverage target on each play
             for playId_tuple in playIds:
@@ -62,33 +60,9 @@ def main():
                 #dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
             else:
                 pass
-        data_frame.append([gameId, player_distances])
+    populate_separation_by_player(cursor)
     connection.commit()
-    
-    
-    ## TODO - some sort of visualization    
-    closest_coverage_players = get_top_ten_players(cursor)
-    closest_coverage_distance = extract_best_averages(closest_coverage_players)
-    
-    plt.bar(range(len(closest_coverage_players)), closest_coverage_distance, width=0.6)
-    plt.ylabel("Average Separation From Closest Receiver (yards)")
-    plt.title("Which Players Minimized Separation By Receivers In 2019?")
-    plt.rcParams.update({'font.size': 6})
-    x_pos = [i for i in range(len(closest_coverage_players))]
-    plt.xticks(x_pos, extract_names_from_nflIds(cursor, extract_nflIds_from_best(closest_coverage_players)), rotation=15)
-    
-    plt.figtext(0.1, 0.02, "Min 200 Coverage Snaps | Data: @NextGenStats | Figure: @NSportsline")
-
-    for x,y in zip(x_pos, closest_coverage_distance):
-        
-        label = "{:.2f}".format(y)
-
-        plt.annotate(label, # this is the text
-                 (x,y), # this is the point to label
-                 textcoords="offset points", # how to position the text
-                 xytext=(0,10), # distance from text to points (x,y)
-                 ha='center') # horizontal alignment can be left, right or center
-    plt.show()
+   
 
 
 def set_minimum_number_plays(player):
@@ -103,6 +77,13 @@ def extract_nflIds_from_best(best_players):
     return nflIds
        
 def get_top_ten_players(cursor):
+    players_list = get_separation_by_player(cursor)
+    ys = filter(set_minimum_number_plays, players_list)
+    filtered_players_list = list(ys)
+    filtered_players_list.sort(key=itemgetter(1))        
+    return filtered_players_list[:10]
+
+def get_separation_by_player(cursor):
     players = dataStore.get_nflIds_from_separation_table(cursor)
     players_list = []
     for player in players:
@@ -118,24 +99,12 @@ def get_top_ten_players(cursor):
             players_list.append([player, avg_separation, plays])
         else:
             pass
-    ys = filter(set_minimum_number_plays, players_list)
-    filtered_players_list = list(ys)
-    filtered_players_list.sort(key=itemgetter(1))        
-    return filtered_players_list[:10]
-        
-def extract_nflIds_from_dataframe(data_frame):
-    xs = []
-    for game in data_frame:
-        for player in game[1]:
-            xs.append(player[0])
-    return xs
+    return players_list
 
-def extract_avg_distances_from_dataframe(data_frame):
-    ys = []
-    for game in data_frame: 
-        for player in game[1]:
-            ys.append(player[1])
-    return ys
+def populate_separation_by_player(cursor):
+    players_list = get_separation_by_player(cursor)
+    for player in players_list:
+        dataStore.record_avg_separation_by_player_table(cursor, player)
 
 def extract_names_from_nflIds(cursor, nflIds):
     names = []
