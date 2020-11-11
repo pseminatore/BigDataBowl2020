@@ -8,26 +8,11 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
-def main():
-    game = dataReader.readGameData()[0]
-    tracking = dataReader.readTrackingData()
-    
+def main(): 
     connection = dataStore.create_data_store()
     cursor = connection.cursor()
-    """ dataStore.drop_games_table(cursor)
-    dataStore.drop_tracking_table(cursor)
-    dataStore.drop_separation_table(cursor)
-    connection.commit()
     
-    dataStore.create_avg_separation_table(cursor)
-    ## Set up data tables - only needed to run once
-    dataStore.create_games_table(cursor)
-    dataStore.create_tracking_table(cursor)
-    
-    dataStore.populate_games_table(cursor, game)
-    dataStore.populate_tracking_table(cursor, tracking) 
-    connection.commit()""" 
-    
+
     gameIds = dataStore.get_all_gameIds(cursor)
     data_frame = []
     
@@ -71,7 +56,7 @@ def main():
             average_distance_across_plays = calculate_avg_distance_across_plays(player_avg_distances)
             player_avg_record = [nflId, average_distance_across_plays, len(player_avg_distances)]
             player_distances.append(player_avg_record)
-            #dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
+            dataStore.record_avg_separation_table(cursor, gameId, player_avg_record)
         data_frame.append([gameId, player_distances])
     connection.commit()
     

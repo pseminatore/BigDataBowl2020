@@ -13,6 +13,7 @@ def readTrackingData():
         csvfile = open(os.path.join(os.getcwd(), filename))
         reader = csv.DictReader(csvfile)
         data.append(reader)
+        print("added ( %s ) to reader" % filename)
     return data
             
 def readPlayerData():

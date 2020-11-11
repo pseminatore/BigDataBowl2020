@@ -93,7 +93,7 @@ def populate_tracking_table(c, data):
     counter = 0
     reader_count = 0
     try:
-        for reader in data[:2]:
+        for reader in data[:4]:
             for row in reader:
                 query = '''INSERT INTO tracking ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
                 c.execute(query)
