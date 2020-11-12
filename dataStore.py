@@ -2,7 +2,7 @@ import sqlite3
 from sqlite3 import Error
 import os
 
-
+## --------------------CREATE DATABASE AND CONNECTION--------------------------------------------------##
 def create_connection(path):
     connection = None
     
@@ -19,6 +19,7 @@ def create_data_store():
     connection = create_connection(os.getcwd() + "\\datastore.sqlite")
     return connection
 
+##--------------------CREATE TABLES-------------------------------------------------------------------##
 def create_tracking_table(c):
     query = '''CREATE TABLE IF NOT EXISTS tracking (
         time text NOT NULL,
@@ -93,10 +94,60 @@ def create_avg_separation_by_player_table(c):
     except Error as e:
         print(e)
 
+
+def create_plays_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS plays (
+        gameId integer,
+        playId integer,
+        playDescription text,
+        quarter integer,
+        down integer,
+        yardsToGo integer,
+        possesionTeam text,
+        playType text,
+        yardlineSide text,
+        yardlineNumber real,
+        offenseFormation text,
+        personnelO text,
+        defendersInTheBox integer,
+        numberOfPassRushers integer,
+        personnelD text,
+        typeDropback text,
+        preSnapHomeScore integer,
+        preSnapVisitorScore integer,
+        gameClock text,
+        absoluteYardlineNumber integer,
+        penaltyCodes text,
+        penaltyJerseyNumber text,
+        passResult text,
+        offensePlayResult text,
+        playResult text,
+        epa real,
+        isDefensivePI text,
+        PRIMARY KEY(gameId, playId)
+    );'''
+    
+    try:
+        c.execute(query)
+        print("Connection to table -plays- successful")
+    except Error as e:
+        print(e)
+
+
+##----------------------POPULATE TABLES---------------------------------------------------##
 def populate_games_table(c, data):
     try:
         for row in data:
             query = '''INSERT INTO games ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
+            c.execute(query) 
+        print("Inserted data succesfully")
+    except Error as e:
+        print(e)
+
+def populate_plays_table(c, data):
+    try:
+        for row in data:
+            query = '''INSERT INTO plays ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
             c.execute(query) 
         print("Inserted data succesfully")
     except Error as e:
@@ -131,9 +182,8 @@ def record_avg_separation_by_player_table(c, data):
     except Error as e:
         print(e)
 
-def unpack_list(data_list):
-    data_string = '"' + '", "'.join(data_list) + '"'
-    return data_string
+
+##---------------------------------RETREIVAL METHODS---------------------------------##
 
 def get_all_gameIds(c):
     gameIds = None
@@ -248,6 +298,7 @@ def get_separation_for_player_in_separation_table(c, nflId):
         print(e)
     return separations
 
+##-------------------------DROP TABLE METHODS-----------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
     try:
@@ -279,3 +330,8 @@ def drop_separation_by_player_table(c):
         print("Drop table -avg_separation_by_player- successful")
     except Error as e:
         print(e)
+        
+##--------------------------------UTILITY METHODS-----------------------------------##
+def unpack_list(data_list):
+    data_string = '"' + '", "'.join(data_list) + '"'
+    return data_string
