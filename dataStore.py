@@ -94,7 +94,18 @@ def create_avg_separation_by_player_table(c):
     except Error as e:
         print(e)
 
-
+def create_avg_separation_and_epa_by_play_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS avg_separation_and_epa_by_play (
+        playGUID integer PRIMARY KEY,
+        epa real,
+        avgSeparation real
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -avg_separation_and_epa_by_play- successful")
+    except Error as e:
+        print(e)
+        
 def create_plays_table(c):
     query = '''CREATE TABLE IF NOT EXISTS plays (
         gameId integer,
@@ -103,7 +114,7 @@ def create_plays_table(c):
         quarter integer,
         down integer,
         yardsToGo integer,
-        possesionTeam text,
+        possessionTeam text,
         playType text,
         yardlineSide text,
         yardlineNumber real,
@@ -118,7 +129,7 @@ def create_plays_table(c):
         gameClock text,
         absoluteYardlineNumber integer,
         penaltyCodes text,
-        penaltyJerseyNumber text,
+        penaltyJerseyNumbers text,
         passResult text,
         offensePlayResult text,
         playResult text,
@@ -182,7 +193,12 @@ def record_avg_separation_by_player_table(c, data):
     except Error as e:
         print(e)
 
-
+def record_avg_separation_and_epa_by_play(c, data):
+    try:
+        query = '''INSERT INTO avg_separation_and_epa_by_play ( playGUID, epa, avgSeparation ) VALUES ( %d, %f, %f )''' % (data[0], data[1], data[2])
+        c.execute(query) 
+    except Error as e:
+        print(e)
 ##---------------------------------RETREIVAL METHODS---------------------------------##
 
 def get_all_gameIds(c):
@@ -298,12 +314,49 @@ def get_separation_for_player_in_separation_table(c, nflId):
         print(e)
     return separations
 
+def get_epa_by_play(c):
+    plays = None
+    try:
+        query = '''SELECT gameId, playId, epa FROM plays'''
+        c.execute(query)
+        plays = c.fetchall() 
+    except Error as e:
+        print(e)
+    return plays
+
+def get_first_frame_of_play(c, gameId, playId):
+    frame = None
+    try:
+        query = '''SELECT frameId FROM tracking WHERE gameId = ( %d ) AND playId = ( %d ) LIMIT 1''' % (gameId, playId)
+        c.execute(query)
+        frame = c.fetchall()
+    except Error as e:
+        print(e)
+    return frame
+
+def get_nflIds_from_play(c, gameId, playId, frameId):
+    nflIds = None
+    try:
+        query = '''SELECT nflId FROM tracking WHERE gameId = ( %d ) AND playId = ( %d ) AND frameId = ( %s ) AND position IN ("SS", "FS", "MLB", "LB", "CB")''' % (gameId, playId, frameId)
+        c.execute(query)
+        nflIds = c.fetchall() 
+    except Error as e:
+        print(e)
+    return nflIds
 ##-------------------------DROP TABLE METHODS-----------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
     try:
         c.execute(query)
         print("Drop table -games- successful")
+    except Error as e:
+        print(e)
+
+def drop_plays_table(c):
+    query = '''DROP TABLE plays;'''
+    try:
+        c.execute(query)
+        print("Drop table -plays- successful")
     except Error as e:
         print(e)
         
