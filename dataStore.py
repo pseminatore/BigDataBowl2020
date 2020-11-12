@@ -343,6 +343,17 @@ def get_nflIds_from_play(c, gameId, playId, frameId):
     except Error as e:
         print(e)
     return nflIds
+
+def get_epa_and_avg_separation_by_play(c):
+    plays = None
+    try:
+        query = '''SELECT * FROM avg_separation_and_epa_by_play'''
+        c.execute(query)
+        plays = c.fetchall() 
+    except Error as e:
+        print(e)
+    return plays
+
 ##-------------------------DROP TABLE METHODS-----------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
