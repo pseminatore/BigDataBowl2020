@@ -144,7 +144,17 @@ def create_plays_table(c):
     except Error as e:
         print(e)
 
-
+def create_time_to_throw_vs_epa_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS time_to_throw_and_epa_by_play (
+        playGUID integer PRIMARY KEY,
+        epa real,
+        timeToThrow real
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -time_to_throw_and_epa_by_play- successful")
+    except Error as e:
+        print(e)
 ##----------------------POPULATE TABLES---------------------------------------------------##
 def populate_games_table(c, data):
     try:
@@ -196,6 +206,13 @@ def record_avg_separation_by_player_table(c, data):
 def record_avg_separation_and_epa_by_play(c, data):
     try:
         query = '''INSERT INTO avg_separation_and_epa_by_play ( playGUID, epa, avgSeparation ) VALUES ( %d, %f, %f )''' % (data[0], data[1], data[2])
+        c.execute(query) 
+    except Error as e:
+        print(e)
+        
+def record_time_to_throw_vs_epa_by_play(c, data):
+    try:
+        query = '''INSERT INTO time_to_throw_and_epa_by_play ( playGUID, epa, timeToThrow ) VALUES ( %d, %f, %f )''' % (data[0], data[1], data[2])
         c.execute(query) 
     except Error as e:
         print(e)
@@ -364,6 +381,41 @@ def get_num_pass_rushers_and_epa_by_play(c):
         print(e)
     return plays
 
+
+def get_frameId_where_ball_snapped(c, gameId, playId):
+    plays = None
+    try:
+        query = '''SELECT frameId, time FROM tracking WHERE gameId = ( %d ) AND playId = ( %d ) AND event = "ball_snap" LIMIT 1''' % (gameId, playId)
+        c.execute(query)
+        plays = c.fetchall() 
+    except Error as e:
+        print(e)
+    return plays
+
+def get_frameId_and_time_where_pass_attempted(c, gameId, playId):
+    frameId = None
+    try:
+        query = '''SELECT frameId, time FROM tracking WHERE gameId = ( %s ) AND playId = ( %s ) AND event IN ("pass_lateral", "pass_forward") LIMIT 1''' % (gameId, playId)
+        c.execute(query)
+        arr = c.fetchall()
+        if arr:
+            frameId = arr[0]
+        else:
+            return 1
+        #print("query executed successfully: ( %s ) records found" % (len(frameIds)))
+    except Error as e:
+        print(e)
+    return frameId
+
+def get_time_to_throw_and_epa_by_play(c):
+    plays = None
+    try:
+        query = '''SELECT timeToThrow, epa FROM time_to_throw_and_epa_by_play WHERE timeToThrow > 0'''
+        c.execute(query)
+        plays = c.fetchall() 
+    except Error as e:
+        print(e)
+    return plays
 ##-------------------------DROP TABLE METHODS-----------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
@@ -402,6 +454,14 @@ def drop_separation_by_player_table(c):
     try:
         c.execute(query)
         print("Drop table -avg_separation_by_player- successful")
+    except Error as e:
+        print(e)
+        
+def drop_time_to_throw_and_epa_by_play_table(c):
+    query = '''DROP TABLE time_to_throw_and_epa_by_play;'''
+    try:
+        c.execute(query)
+        print("Drop table -time_to_throw_and_epa_by_play- successful")
     except Error as e:
         print(e)
         
