@@ -354,6 +354,16 @@ def get_epa_and_avg_separation_by_play(c):
         print(e)
     return plays
 
+def get_num_pass_rushers_and_epa_by_play(c):
+    plays = None
+    try:
+        query = '''SELECT numberOfPassRushers, epa FROM plays WHERE numberOfPassRushers <> ""'''
+        c.execute(query)
+        plays = c.fetchall() 
+    except Error as e:
+        print(e)
+    return plays
+
 ##-------------------------DROP TABLE METHODS-----------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
