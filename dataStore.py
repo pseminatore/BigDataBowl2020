@@ -2,7 +2,7 @@ import sqlite3
 from sqlite3 import Error
 import os
 
-## --------------------CREATE DATABASE AND CONNECTION--------------------------------------------------##
+## -----------------------------------------------------------CREATE DATABASE AND CONNECTION-----------------------------------------------------------------##
 def create_connection(path):
     connection = None
     
@@ -19,7 +19,7 @@ def create_data_store():
     connection = create_connection(os.getcwd() + "\\datastore.sqlite")
     return connection
 
-##--------------------CREATE TABLES-------------------------------------------------------------------##
+##-------------------------------------------------------------------CREATE TABLES---------------------------------------------------------------------------##
 def create_tracking_table(c):
     query = '''CREATE TABLE IF NOT EXISTS tracking (
         time text NOT NULL,
@@ -155,7 +155,22 @@ def create_time_to_throw_vs_epa_table(c):
         print("Connection to table -time_to_throw_and_epa_by_play- successful")
     except Error as e:
         print(e)
-##----------------------POPULATE TABLES---------------------------------------------------##
+        
+        
+def create_target_receiver_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS targets (
+        gameId integer,
+        playId integer,
+        targetNflId integer,
+        PRIMARY KEY(gameId, playId)
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -targets- successful")
+    except Error as e:
+        print(e)
+        
+##--------------------------------------------------------------------POPULATE TABLES------------------------------------------------------------------------##
 def populate_games_table(c, data):
     try:
         for row in data:
@@ -188,6 +203,15 @@ def populate_tracking_table(c, data):
         print("Inserted data succesfully: Inserted ( %d ) records" % counter)
     except Error as e:
         print(e)
+
+def populate_targets_table(c, data):
+    try:
+        for row in data:
+            query = '''INSERT INTO targets ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
+            c.execute(query) 
+        print("Inserted data succesfully")
+    except Error as e:
+        print(e)
         
 def record_avg_separation_table(c, gameId, data):
     try:
@@ -216,7 +240,7 @@ def record_time_to_throw_vs_epa_by_play(c, data):
         c.execute(query) 
     except Error as e:
         print(e)
-##---------------------------------RETREIVAL METHODS---------------------------------##
+##------------------------------------------------------------------RETREIVAL METHODS------------------------------------------------------------------------##
 
 def get_all_gameIds(c):
     gameIds = None
@@ -416,7 +440,17 @@ def get_time_to_throw_and_epa_by_play(c):
     except Error as e:
         print(e)
     return plays
-##-------------------------DROP TABLE METHODS-----------------------------------------##
+
+def get_target_receiver_by_play(c, gameId, playId):
+    target = None
+    try:
+        query = '''SELECT targetNflId FROM targets WHERE gameId = ( %d ) AND playId = ( %d ) AND targetNflId <> "NA"''' % (gameId, playId)
+        c.execute(query)
+        target = c.fetchall() 
+    except Error as e:
+        print(e)
+    return target
+##--------------------------------------------------------------------DROP TABLE METHODS---------------------------------------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
     try:
@@ -441,6 +475,14 @@ def drop_tracking_table(c):
     except Error as e:
         print(e)
         
+def drop_targets_table(c):
+    query = '''DROP TABLE targets;'''
+    try:
+        c.execute(query)
+        print("Drop table -targets- successful")
+    except Error as e:
+        print(e)
+               
 def drop_separation_table(c):
     query = '''DROP TABLE avg_separation;'''
     try:
@@ -465,7 +507,7 @@ def drop_time_to_throw_and_epa_by_play_table(c):
     except Error as e:
         print(e)
         
-##--------------------------------UTILITY METHODS-----------------------------------##
+##----------------------------------------------------------------UTILITY METHODS----------------------------------------------------------------------------##
 def unpack_list(data_list):
     data_string = '"' + '", "'.join(data_list) + '"'
     return data_string

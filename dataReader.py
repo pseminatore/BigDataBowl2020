@@ -31,6 +31,14 @@ def readPlayData():
         reader = csv.DictReader(csvfile)
         data.append(reader)
     return data
+
+def readTargetReceiverData():
+    data = []
+    for filename in glob.glob("Data/targetedReceiver.csv"):
+        csvfile = open(os.path.join(os.getcwd(), filename))
+        reader = csv.DictReader(csvfile)
+        data.append(reader)
+    return data
             
 def readGameData():
     data = []
