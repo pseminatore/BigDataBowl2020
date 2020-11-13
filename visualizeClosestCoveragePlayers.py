@@ -12,7 +12,7 @@ cursor = connection.cursor()
 
 closest_coverage_players = findClosestCoveragePlayers.get_top_ten_players(cursor)
 closest_coverage_distance = findClosestCoveragePlayers.extract_best_averages(closest_coverage_players)
-findClosestCoveragePlayers.populate_separation_by_player(cursor)
+#findClosestCoveragePlayers.populate_separation_by_player(cursor)
 connection.commit()
 
 plt.bar(range(len(closest_coverage_players)), closest_coverage_distance, width=0.6)
