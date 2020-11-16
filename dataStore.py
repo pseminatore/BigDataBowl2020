@@ -490,7 +490,17 @@ def get_separation_and_epa_by_play(c):
         target = c.fetchall() 
     except Error as e:
         print(e)
-    return target    
+    return target
+
+def get_yards_gained_by_play(c, gameId, playId):
+    yards = None
+    try:
+        query = '''SELECT offensePlayResult FROM plays WHERE gameId = ( %d ) AND playId = ( %d ) AND playType <> "play_type_sack"''' % (gameId, playId)
+        c.execute(query)
+        yards = c.fetchall() 
+    except Error as e:
+        print(e)
+    return yards    
 ##--------------------------------------------------------------------DROP TABLE METHODS---------------------------------------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
