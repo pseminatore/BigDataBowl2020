@@ -169,6 +169,18 @@ def create_target_receiver_table(c):
         print("Connection to table -targets- successful")
     except Error as e:
         print(e)
+
+def create_separation_vs_epa_by_play_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS separation_vs_epa_by_play (
+        playGUID integer PRIMARY KEY,
+        separation real,
+        epa real
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -separation_vs_epa_by_play- successful")
+    except Error as e:
+        print(e)
         
 ##--------------------------------------------------------------------POPULATE TABLES------------------------------------------------------------------------##
 def populate_games_table(c, data):
@@ -237,6 +249,13 @@ def record_avg_separation_and_epa_by_play(c, data):
 def record_time_to_throw_vs_epa_by_play(c, data):
     try:
         query = '''INSERT INTO time_to_throw_and_epa_by_play ( playGUID, epa, timeToThrow ) VALUES ( %d, %f, %f )''' % (data[0], data[1], data[2])
+        c.execute(query) 
+    except Error as e:
+        print(e)
+        
+def record_separation_vs_epa_by_play(c, data):
+    try:
+        query = '''INSERT INTO separation_vs_epa_by_play ( playGUID, separation, epa ) VALUES ( %d, %f, %f )''' % (data[0], data[1], data[2])
         c.execute(query) 
     except Error as e:
         print(e)
@@ -450,6 +469,28 @@ def get_target_receiver_by_play(c, gameId, playId):
     except Error as e:
         print(e)
     return target
+
+def get_target_receiver_location(c, gameId, playId, frameId, nflId):
+    target = None
+    try:
+        query = '''SELECT nflId, x, y FROM tracking WHERE gameId = ( %d ) AND playId = ( %d ) AND frameId = ( %d ) AND nflId = ( %d )''' % (gameId, playId, frameId, nflId)
+        c.execute(query)
+        target = c.fetchall()
+        if target == []:
+            return -1
+    except Error as e:
+        print(e)
+    return target
+
+def get_separation_and_epa_by_play(c):
+    target = None
+    try:
+        query = '''SELECT * FROM separation_vs_epa_by_play'''
+        c.execute(query)
+        target = c.fetchall() 
+    except Error as e:
+        print(e)
+    return target    
 ##--------------------------------------------------------------------DROP TABLE METHODS---------------------------------------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
