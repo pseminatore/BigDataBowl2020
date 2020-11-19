@@ -453,7 +453,7 @@ def get_frameId_and_time_where_pass_attempted(c, gameId, playId):
 def get_time_to_throw_and_epa_by_play(c):
     plays = None
     try:
-        query = '''SELECT timeToThrow, epa FROM time_to_throw_and_epa_by_play WHERE timeToThrow > 0'''
+        query = '''SELECT playGUID, timeToThrow, epa FROM time_to_throw_and_epa_by_play WHERE timeToThrow > 0'''
         c.execute(query)
         plays = c.fetchall() 
     except Error as e:
@@ -500,7 +500,17 @@ def get_yards_gained_by_play(c, gameId, playId):
         yards = c.fetchall() 
     except Error as e:
         print(e)
-    return yards    
+    return yards
+
+def get_separation_and_time_to_throw_by_play(c):
+    play = None
+    try:
+        query = '''select ti.timeToThrow, sep.separation from time_to_throw_and_epa_by_play ti inner join separation_vs_epa_by_play sep on ti.playGUID = sep.playGUID WHERE ti.timeToThrow > 0'''
+        c.execute(query)
+        play = c.fetchall() 
+    except Error as e:
+        print(e)
+    return play    
 ##--------------------------------------------------------------------DROP TABLE METHODS---------------------------------------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
