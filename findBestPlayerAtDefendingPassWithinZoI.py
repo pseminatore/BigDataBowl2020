@@ -8,57 +8,90 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
-def main(): 
+def main(frames_project_forward=5): 
     connection = dataStore.create_data_store()
     cursor = connection.cursor()
-    
+    counter = 0
 
     gameIds = dataStore.get_all_gameIds(cursor)
     
     for gameId_tuple in gameIds:
         
         gameId = int(gameId_tuple[0])
-        nflIds = dataStore.get_nflIds_from_game(cursor, gameId)
-        
-        ## Get nflIds for all coverage players
-        for nflId_tuple in nflIds:
+        playIds = dataStore.get_playIds_from_game(cursor, gameId)
             
-            nflId = int(nflId_tuple[0])
-            playIds = dataStore.get_playIds_by_player(cursor, gameId, nflId)
-            plays_defended = []
-            ## TODO - attempt to filter out zone coverage
-            ## Get players average distance from coverage target on each play
-            for playId_tuple in playIds:
-                
-                playId = int(playId_tuple[0])
-                frameIds = dataStore.get_frameIds_by_play(cursor, gameId, nflId, playId, stop_frame_id)
-                
-                ## Find target receiver on each play
-                target_receiver = 
+        for playId_tuple in playIds:
+            
+            playId = int(playId_tuple[0])
+            
+            ## Find target receiver on each play
+            raw_targ = dataStore.get_target_receiver_by_play(cursor, gameId, playId)
+            
+            if raw_targ:
+                target_receiver = raw_targ[0][0]
                 
                 ## Find frame where pass thrown
-                frame_id_pass_thrown = 
-                
-                ## Find closest defender when pass thrown
-                closest_defender = 
-                
-                ## Calculate defenders Zone of Influence
-                defender_zoi = 
-                
-                ## Is receiver within ZoI when pass thrown?
-                defender_influence = 
-                
-                ## If so, is the pass defended?
-                if defender_influence:
-                    pass_defended = 
-                    plays_defended.append(pass_defended)
-            
-            dataStore.record_player_effeciency_def_zoi(nflId, len(playIds), '''number of plays within zoi''', '''(%) defended given within zoi''')
+                was_thrown = dataStore.get_frameId_and_time_where_pass_attempted(cursor, gameId, playId)
+                if isinstance(was_thrown, tuple):
                     
-                
+                    frame_id_pass_thrown = int(was_thrown[0])
+                    
+                    defenders = dataStore.get_nflIds_from_play(cursor, gameId, playId, frame_id_pass_thrown)
+                    
+                    for defender in defenders:
+                        # Look forward to ensure ZoI is dynamic
+                        rad_influence, proj_defender_location = project_zoi_forward(cursor, defender, target_receiver, gameId, playId, frame_id_pass_thrown, frames_project_forward)
+                        if rad_influence == -1 and proj_defender_location == -1:
+                            pass
+                        else:
+                            raw_rec_loc = dataStore.get_target_receiver_location(cursor, gameId, playId, frame_id_pass_thrown + frames_project_forward, target_receiver)
+                        
+                            if isinstance(raw_rec_loc, list):
+                                proj_receiver_location = raw_rec_loc[0]
+                                
+                                # Can the defender influence the play?
+                                in_zoi = int(is_receiver_in_zoi(rad_influence, proj_defender_location, proj_receiver_location))
+                                
+                                # Was the pass completed?
+                                query_pass_completed = dataStore.get_is_pass_completed(cursor, gameId, playId)
+                                
+                                if query_pass_completed:
+                                    
+                                    pass_completed = query_pass_completed[0][1]
+                                    data = [defender[0], playId, gameId, in_zoi, pass_completed]
+                                    dataStore.record_zoi_completion_by_play(cursor, data)
+                                    counter+=1
+                                    #print (counter)                   
+            
     connection.commit()
 
+def project_zoi_forward(cursor, defender, target_receiver, gameId, playId, frameId, frames_project_forward):
+    try:
+        proj_frameId = frameId + frames_project_forward
+        proj_defender_location = dataStore.get_target_defender_location(cursor, gameId, playId, proj_frameId, defender[0])[0]
+        proj_ball_location = dataStore.get_ball_location(cursor, gameId, playId, proj_frameId)[0]
+        proj_zoi_rad = calculate_zoi(proj_defender_location, proj_ball_location)
+        return proj_zoi_rad, proj_defender_location
+    except Exception:
+        return -1, -1
+    
 
+
+def calculate_zoi(proj_defender_location, proj_ball_location):
+    dist_from_ball = calculate_distance(proj_defender_location, proj_ball_location)
+    if dist_from_ball > 18:
+        return 10
+    else:
+        return 4 + (6/(18 ** 2)) * (dist_from_ball ** 2)
+
+def calculate_distance(proj_defender_location, proj_ball_location):
+    distance = math.sqrt(abs(((proj_defender_location[0] - proj_ball_location[0]) ** 2) + ((proj_defender_location[1] - proj_ball_location[1]) ** 2)))
+    return distance
+
+def is_receiver_in_zoi(rad_influence, proj_defender_location, proj_receiver_location):
+    distance = math.sqrt(abs(((proj_defender_location[0] - proj_receiver_location[1]) ** 2) + ((proj_defender_location[1] - proj_receiver_location[2]) ** 2)))
+    return distance <= rad_influence
+         
 def extract_names_from_nflIds(cursor, nflIds):
     names = []
     for nflId in nflIds:
@@ -66,14 +99,22 @@ def extract_names_from_nflIds(cursor, nflIds):
         names.append(name)
     return names
     
-def calculate_min_distance(off_locations, def_location):
+def calculate_min_distance(rec_location, def_locations):
     distances = []
-    for off_location in off_locations:
-        distance = [math.sqrt(abs((off_location[0] - def_location[0][0]) + (off_location[1] - def_location[0][1]))), off_location[2]]
+    for location in def_locations:
+        distance = [math.sqrt(abs((location[0] - rec_location[1]) + (location[1] - rec_location[2]))), location[2]]
         distances.append(distance)
     min_distance = sorted(distances, key=itemgetter(0))[0]
     return min_distance
- 
+
+def find_closest_defender(cursor, off_location, defenders, gameId, playId, frameId):
+    locations = []
+    for defender in defenders:
+        defender_id = defender[0]
+        location = dataStore.get_target_defender_location(cursor, gameId, playId, frameId, defender_id)[0]
+        locations.append(location)
+    closest_defender = calculate_min_distance(off_location, locations)
+    return closest_defender 
 
 if __name__ == "__main__":
     main()

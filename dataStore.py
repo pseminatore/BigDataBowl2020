@@ -181,6 +181,21 @@ def create_separation_vs_epa_by_play_table(c):
         print("Connection to table -separation_vs_epa_by_play- successful")
     except Error as e:
         print(e)
+
+def create_zoi_completion_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS zoi_completion_by_play (
+        nflId real,
+        playId real,
+        gameId real,
+        inZoI integer,
+        completed integer,
+        PRIMARY KEY(nflId, playId, gameId)
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -zoi_completion_by_play- successful")
+    except Error as e:
+        print(e)
         
 ##--------------------------------------------------------------------POPULATE TABLES------------------------------------------------------------------------##
 def populate_games_table(c, data):
@@ -259,6 +274,13 @@ def record_separation_vs_epa_by_play(c, data):
         c.execute(query) 
     except Error as e:
         print(e)
+        
+def record_zoi_completion_by_play(c, data):
+    try:
+        query = '''INSERT INTO zoi_completion_by_play ( nflId, playId, gameId, inZoI, completed ) VALUES ( %f, %f, %f, %d, %d )''' % (data[0], data[1], data[2], data[3], data[4])
+        c.execute(query) 
+    except Error as e:
+        print(e)        
 ##------------------------------------------------------------------RETREIVAL METHODS------------------------------------------------------------------------##
 
 def get_all_gameIds(c):
@@ -282,6 +304,17 @@ def get_nflIds_from_game(c, gameId):
     except Error as e:
         print(e)
     return nflIds
+
+def get_playIds_from_game(c, gameId):
+    playIds = None
+    try:
+        query = '''SELECT DISTINCT playId FROM tracking WHERE gameId = ( %s )''' % (gameId)
+        c.execute(query)
+        playIds = c.fetchall() 
+        #print("query executed successfully: ( %s ) records found" % (len(nflIds)))
+    except Error as e:
+        print(e)
+    return playIds
 
 def get_playIds_by_player(c, gameId, nflId):
     playIds = None
@@ -510,7 +543,57 @@ def get_separation_and_time_to_throw_by_play(c):
         play = c.fetchall() 
     except Error as e:
         print(e)
-    return play    
+    return play
+
+def get_ball_location(c, gameId, playId, frameId):
+    loc = None
+    try:
+        query = '''SELECT x, y from tracking where gameId = ( %d ) and playId = ( %d ) and frameID = ( %d ) and displayName = "Football"''' % (gameId, playId, frameId)
+        c.execute(query)
+        loc = c.fetchall() 
+    except Error as e:
+        print(e)
+    return loc    
+
+def get_is_pass_completed(c, gameId, playId):
+    result = None
+    try:
+        query = '''SELECT distinct frameID, CASE WHEN event IN ("pass_outcome_caught", "pass_outcome_touchdown") THEN 1 WHEN event IN ("pass_outcome_incomplete", "pass_outcome_interception") THEN 0 ELSE -1 END AS result FROM tracking WHERE gameId = ( %d ) AND playId = ( %d ) AND result <> -1''' % (gameId, playId)
+        c.execute(query)
+        result = c.fetchall() 
+    except Error as e:
+        print(e)
+    return result
+
+def get_zoi_players(c, min_plays):
+    nflIds = None
+    try:
+        query = '''SELECT DISTINCT nflId, count(nflId) from zoi_completion_by_play where inZoI = 1 GROUP by nflId'''
+        c.execute(query)
+        nflIds = c.fetchall() 
+    except Error as e:
+        print(e)
+    return list(filter(lambda player: player[1] > min_plays, nflIds))  
+
+def get_zoi_plays_by_player(c, nflId):
+    plays = None
+    try:
+        query = '''SELECT completed FROM zoi_completion_by_play WHERE nflId = ( %r ) AND inZoI = 1''' % (nflId)
+        c.execute(query)
+        plays = c.fetchall() 
+    except Error as e:
+        print(e)
+    return plays    
+
+def get_name_by_nfl(c, nflId):
+    name = None
+    try:
+        query = '''SELECT displayName FROM tracking WHERE nflId = ( %r ) LIMIT 1''' % (nflId)
+        c.execute(query)
+        name = c.fetchall() 
+    except Error as e:
+        print(e)
+    return name       
 ##--------------------------------------------------------------------DROP TABLE METHODS---------------------------------------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
@@ -565,6 +648,14 @@ def drop_time_to_throw_and_epa_by_play_table(c):
     try:
         c.execute(query)
         print("Drop table -time_to_throw_and_epa_by_play- successful")
+    except Error as e:
+        print(e)
+
+def drop_zoi_completion_by_play_table(c):
+    query = '''DROP TABLE zoi_completion_by_play;'''
+    try:
+        c.execute(query)
+        print("Drop table -zoi_completion_by_play- successful")
     except Error as e:
         print(e)
         
