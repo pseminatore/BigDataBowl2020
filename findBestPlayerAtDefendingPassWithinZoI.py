@@ -4,7 +4,6 @@ import sqlite3
 from sqlite3 import Error
 import os
 import math
-import matplotlib.pyplot as plt
 from operator import itemgetter
 
 
@@ -75,8 +74,6 @@ def project_zoi_forward(cursor, defender, target_receiver, gameId, playId, frame
     except Exception:
         return -1, -1
     
-
-
 def calculate_zoi(proj_defender_location, proj_ball_location):
     dist_from_ball = calculate_distance(proj_defender_location, proj_ball_location)
     if dist_from_ball > 18:
@@ -99,22 +96,6 @@ def extract_names_from_nflIds(cursor, nflIds):
         names.append(name)
     return names
     
-def calculate_min_distance(rec_location, def_locations):
-    distances = []
-    for location in def_locations:
-        distance = [math.sqrt(abs((location[0] - rec_location[1]) + (location[1] - rec_location[2]))), location[2]]
-        distances.append(distance)
-    min_distance = sorted(distances, key=itemgetter(0))[0]
-    return min_distance
-
-def find_closest_defender(cursor, off_location, defenders, gameId, playId, frameId):
-    locations = []
-    for defender in defenders:
-        defender_id = defender[0]
-        location = dataStore.get_target_defender_location(cursor, gameId, playId, frameId, defender_id)[0]
-        locations.append(location)
-    closest_defender = calculate_min_distance(off_location, locations)
-    return closest_defender 
 
 if __name__ == "__main__":
     main()

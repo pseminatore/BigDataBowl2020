@@ -94,8 +94,9 @@ def main():
             )
         ]
     )
-    
     fig.show()
+    fig.write_html("bestPlayerAtDefendingPassWithinZoI.html")
+    
 
 
 def grab_best_players(cursor, min_attempts, num_players):
