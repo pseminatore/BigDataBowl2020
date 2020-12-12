@@ -66,6 +66,22 @@ def create_games_table(c):
     except Error as e:
         print(e)
         
+def create_player_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS players (
+        nflId real PRIMARY KEY,
+        height text,
+        weight real,
+        birthDate text,
+        collegeName text,
+        position text,
+        displayName text
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -games- successful")
+    except Error as e:
+        print(e)
+        
 def create_avg_separation_table(c):
     query = '''CREATE TABLE IF NOT EXISTS avg_separation (
         nflId real,
@@ -196,7 +212,24 @@ def create_zoi_completion_table(c):
         print("Connection to table -zoi_completion_by_play- successful")
     except Error as e:
         print(e)
-        
+
+def create_model_table(c):
+    query = '''CREATE TABLE IF NOT EXISTS model_db (
+        NflId real PRIMARY KEY,
+        CompPer real,
+        TopSpeed real,
+        MaxAccel real,
+        Height real,
+        Weight real,
+        Age integer,
+        PredCompPer real,
+        Residual real
+    );'''
+    try:
+        c.execute(query)
+        print("Connection to table -model_db- successful")
+    except Error as e:
+        print(e)            
 ##--------------------------------------------------------------------POPULATE TABLES------------------------------------------------------------------------##
 def populate_games_table(c, data):
     try:
@@ -239,6 +272,15 @@ def populate_targets_table(c, data):
         print("Inserted data succesfully")
     except Error as e:
         print(e)
+ 
+def populate_players_table(c, data):
+    try:
+        for row in data:
+            query = '''INSERT OR IGNORE INTO players ( %s ) VALUES ( %s )''' % (unpack_list(list(row.keys())), unpack_list(list(row.values())))
+            c.execute(query) 
+        print("Inserted data succesfully")
+    except Error as e:
+        print(e) 
         
 def record_avg_separation_table(c, gameId, data):
     try:
@@ -280,7 +322,15 @@ def record_zoi_completion_by_play(c, data):
         query = '''INSERT INTO zoi_completion_by_play ( nflId, playId, gameId, inZoI, completed ) VALUES ( %f, %f, %f, %d, %d )''' % (data[0], data[1], data[2], data[3], data[4])
         c.execute(query) 
     except Error as e:
-        print(e)        
+        print(e)
+        
+def record_model_input_data(c, data_list):
+    try:
+        for data in data_list:
+            query = '''INSERT INTO model_db ( NflId, CompPer, TopSpeed, MaxAccel, Height, Weight, Age ) VALUES ( %f, %f, %f, %f, %f, %f, %d )''' % (data[0], data[1], data[2], data[3], data[4], data[5], data[6])
+            c.execute(query) 
+    except Error as e:
+        print(e)             
 ##------------------------------------------------------------------RETREIVAL METHODS------------------------------------------------------------------------##
 
 def get_all_gameIds(c):
@@ -593,7 +643,50 @@ def get_name_by_nfl(c, nflId):
         name = c.fetchall() 
     except Error as e:
         print(e)
-    return name       
+    return name
+
+def get_top_speed_by_nflId(c, nflId):
+    name = None
+    try:
+        query = '''SELECT s from tracking where nflId = ( %r ) ORDER BY s DESC LIMIT 1''' % (nflId)
+        c.execute(query)
+        name = c.fetchall() 
+    except Error as e:
+        print(e)
+    return name    
+
+
+def get_max_accel_by_nflId(c, nflId):
+    name = None
+    try:
+        query = '''SELECT a from tracking where nflId = ( %r ) ORDER BY a DESC LIMIT 1''' % (nflId)
+        c.execute(query)
+        name = c.fetchall() 
+    except Error as e:
+        print(e)
+    return name   
+
+def get_playerinfo_by_nflId(c, nflId):
+    name = None
+    try:
+        query = '''SELECT height, weight, birthDate from players where nflId = ( %r )''' % (nflId)
+        c.execute(query)
+        name = c.fetchall() 
+    except Error as e:
+        print(e)
+    return name
+
+def get_modelinfo_by_nflId(c, nflIds):
+    data_list = []
+    try:
+        for nflId in nflIds:
+            query = '''SELECT NflId, CompPer, TopSpeed, MaxAccel, Height, Weight, Age from model_db where NflId = ( %r )''' % (nflId)
+            c.execute(query)
+            data = c.fetchall()[0]
+            data_list.append(data) 
+    except Error as e:
+        print(e)
+    return data_list      
 ##--------------------------------------------------------------------DROP TABLE METHODS---------------------------------------------------------------------##
 def drop_games_table(c):
     query = '''DROP TABLE games;'''
